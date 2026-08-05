@@ -5,9 +5,13 @@ import { mediaTypes, type MediaType } from "@/utils/data/media";
 import FilePreview from "@/components/file/preview";
 import FileUpload, { type UploadedFile } from "@/components/form/file-upload";
 import ActionButton from "@/components/buttons/action-btn";
-import { ImagePlus } from "lucide-react";
+import { DownloadCloud, ImagePlus } from "lucide-react";
+import { downloadFile } from "@/utils/file/download";
 
 type Props = {
+  labels: React.ComponentProps<typeof FileUpload>["labels"];
+  sampleUrl: URL | string;
+  sampleFileName: string;
   titleProps: React.ComponentProps<typeof FormSectionTitle>;
   fileType: MediaType;
   files: UploadedFile[];
@@ -27,7 +31,10 @@ type Props = {
   >;
 };
 
-export default function SpaceMigrationsUploadSection({
+export default function MigrationsUploadSection({
+  labels,
+  sampleUrl,
+  sampleFileName = "sample-file",
   titleProps,
   fileType = "migrationfile",
   processUpload,
@@ -41,8 +48,8 @@ export default function SpaceMigrationsUploadSection({
         {titleProps?.children || "Migration Files"}
       </FormSectionTitle>
       {/* File Previews */}
-      <div className="col-span-full flex gap-2 flex-wrap">
-        {files.map((file, i) => (
+      <div className="col-span-full flex gap-2 flex-wrap justify-between">
+        {/* {files.map((file, i) => (
           <FilePreview
             key={`${fileType}-${i}`}
             file={file}
@@ -55,40 +62,65 @@ export default function SpaceMigrationsUploadSection({
               />
             )}
           />
-        ))}
-      </div>
-      {/* Upload button with dialog */}
-      <DialogModal
-        useDefaultLayout={false}
-        closeProps={{ ref: dialogClose }}
-        triggerProps={{
-          children: (
-            <ActionButton variant={"secondary"} className="max-w-fit px-5 py-6">
-              <div className="flex gap-2 items-center">
-                Upload Migration File <ImagePlus />
-              </div>
-            </ActionButton>
-          ),
-        }}
-        contentProps={{
-          className:
-            "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
-        }}
-      >
-        <FileUpload
-          fileType={mediaTypes.MIGRATIONFILE}
-          onFilesUpload={(files) => {
-            console.log("All uploaded migration files :", files);
-            setFiles((prev) =>
-              [...prev, ...files].filter((file) => file.status === "completed"),
-            );
+        ))} */}
+
+        {/* Upload button with dialog */}
+        <DialogModal
+          useDefaultLayout={false}
+          closeProps={{ ref: dialogClose }}
+          triggerProps={{
+            children: (
+              <ActionButton
+                variant={"secondary"}
+                className="max-w-fit px-5 py-6"
+              >
+                <div className="flex gap-2 items-center">
+                  Upload File <ImagePlus />
+                </div>
+              </ActionButton>
+            ),
           }}
-          sizeLimit={{ val: 50, notation: "mb" }}
-          simulationOptions={{ estimatedTime: 20 }}
-          // @ts-ignore
-          processFileUpload={(...args) => processUpload?.(dialogClose, ...args)}
-        />
-      </DialogModal>
+          contentProps={{
+            className:
+              "w-[80dvw] max-sm:w-[calc(100dvw-20px)] max-w-none max-h-[90dvh]",
+          }}
+        >
+          <FileUpload
+            labels={labels}
+            fileType={mediaTypes.MIGRATIONFILE}
+            onFilesUpload={(files) => {
+              console.log("All uploaded migration files :", files);
+              setFiles((prev) =>
+                [...prev, ...files].filter(
+                  (file) => file.status === "completed",
+                ),
+              );
+            }}
+            sizeLimit={{ val: 50, notation: "mb" }}
+            simulationOptions={{ estimatedTime: 20 }}
+            // @ts-ignore
+            processFileUpload={(...args) =>
+              processUpload?.(dialogClose, ...args)
+            }
+          />
+        </DialogModal>
+        {!!sampleUrl && (
+          <ActionButton
+            className="px-5 py-6"
+            onClick={() => {
+              const url = new URL(sampleUrl);
+              downloadFile(
+                url.href,
+                `${sampleFileName}${url.pathname.match(/\.[^\/.]+$/)?.[0]}`,
+              );
+            }}
+          >
+            <div className="flex gap-2 items-center">
+              Download Sample <DownloadCloud />
+            </div>
+          </ActionButton>
+        )}
+      </div>
     </>
   );
 }
